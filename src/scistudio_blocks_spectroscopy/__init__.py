@@ -14,7 +14,7 @@ finds it at the top level.
 
 from __future__ import annotations
 
-from scistudio.blocks.base.package_info import PackageInfo
+from scistudio.blocks.base.package_info import PackageInfo, PackageOtaSource
 
 from scistudio_blocks_spectroscopy.blocks import BLOCKS as _SPECTROSCOPY_BLOCKS
 from scistudio_blocks_spectroscopy.blocks.feature_extraction import (
@@ -56,6 +56,13 @@ from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum, get_t
 
 __version__ = "0.1.0"
 
+# OTA hot-update source (#1784). Keep in sync with [tool.scistudio.ota]
+# in pyproject.toml; validate_contract.py enforces they match.
+OTA_MANIFEST_URL = (
+    "https://github.com/jiazhenz026/scistudio-blocks-spectroscopy/releases/download/ota-alpha/manifest.json"
+)
+OTA_CHANNEL = "alpha"
+
 _SPECTROSCOPY_TYPES: tuple[type, ...] = (Spectrum, SpectralDataset)
 
 
@@ -66,6 +73,7 @@ def get_package_info() -> PackageInfo:
         description="General 1-D spectroscopy blocks (Raman, FTIR, UV-Vis, fluorescence, NIR) for SciStudio.",
         author="SciStudio Contributors",
         version=__version__,
+        ota=PackageOtaSource(manifest_url=OTA_MANIFEST_URL, channel=OTA_CHANNEL),
     )
 
 
