@@ -49,7 +49,11 @@ jobs:
       - name: Ruff lint
         run: ruff check .
 
+      # mypy targets python_version 3.11 (matches SciStudio core). Run it only
+      # on the 3.11 leg: under 3.12 the installed numpy stubs use PEP 695 `type`
+      # statements that a 3.11 target cannot parse.
       - name: Mypy
+        if: matrix.python-version == '3.11'
         run: mypy src
 
       - name: Pytest
@@ -60,7 +64,9 @@ jobs:
 
   build-wheel:
     name: Build .whl
-    needs: quality
+    # Independent of `quality`: the wheel build needs neither core nor the
+    # token, so it always runs and reports on its own rather than being skipped
+    # when a quality leg fails.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
