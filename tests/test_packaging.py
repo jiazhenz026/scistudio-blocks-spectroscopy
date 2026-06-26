@@ -92,7 +92,7 @@ def test_get_package_info_metadata() -> None:
     assert isinstance(info, PackageInfo)
     assert info.name == "scistudio-blocks-spectroscopy"
     assert info.author == "SciStudio Contributors"
-    assert info.version == "0.1.0"
+    assert info.version == pkg.__version__
 
 
 def test_get_block_package_pairs_info_and_blocks() -> None:
