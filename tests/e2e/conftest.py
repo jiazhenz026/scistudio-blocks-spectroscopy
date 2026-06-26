@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-
 from scistudio.blocks.base.config import BlockConfig
 from scistudio.core.types.collection import Collection
 

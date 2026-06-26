@@ -12,6 +12,8 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from scistudio.blocks.base.config import BlockConfig
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.blocks.utilities import (
     LoadSpectralDataset,
@@ -20,8 +22,6 @@ from scistudio_blocks_spectroscopy.blocks.utilities import (
     SaveSpectrum,
 )
 from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
-
-from scistudio.blocks.base.config import BlockConfig
 
 SPECTRUM_EXTS = [".csv", ".tsv", ".txt", ".xlsx", ".dx", ".jcamp", ".jdx", ".spectrum.json"]
 DATASET_EXTS = [".json", ".xlsx"]

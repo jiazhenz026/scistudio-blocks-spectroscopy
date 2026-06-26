@@ -22,13 +22,13 @@ from typing import Any
 
 import numpy as np
 import pytest
+from scistudio.blocks.base.config import BlockConfig
+from scistudio.core.types.collection import Collection
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.blocks.io_handlers import spectrum_formats
 from scistudio_blocks_spectroscopy.blocks.utilities import LoadSpectrum, SaveSpectrum
 from scistudio_blocks_spectroscopy.types import Spectrum
-
-from scistudio.blocks.base.config import BlockConfig
-from scistudio.core.types.collection import Collection
 
 _TYPED_META_FIELDS = ("lambda_unit", "intensity_unit", "lambda_kind", "modality")
 

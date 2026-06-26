@@ -30,6 +30,7 @@ from scistudio.blocks.process.process_block import ProcessBlock
 from scistudio.core.types.base import DataObject
 from scistudio.core.types.collection import Collection
 from scistudio.core.types.dataframe import DataFrame
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.blocks.io_handlers import (
     dataset_formats,

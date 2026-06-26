@@ -19,6 +19,11 @@ from typing import Any
 
 import numpy as np
 import pytest
+from scistudio.blocks.base.config import BlockConfig
+from scistudio.blocks.process.process_block import ProcessBlock
+from scistudio.core.types.collection import Collection
+from scistudio.testing import BlockTestHarness
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.blocks import feature_extraction
 from scistudio_blocks_spectroscopy.blocks.feature_extraction import (
@@ -29,11 +34,6 @@ from scistudio_blocks_spectroscopy.blocks.feature_extraction import (
     FindPeaks,
 )
 from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
-
-from scistudio.blocks.base.config import BlockConfig
-from scistudio.blocks.process.process_block import ProcessBlock
-from scistudio.core.types.collection import Collection
-from scistudio.testing import BlockTestHarness
 
 _SCALAR_TYPES = (type(None), bool, int, float, str)
 
@@ -146,12 +146,12 @@ def test_features_table_is_flat_and_keyed_by_spectrum_id(block_cls: type[Process
 
 def test_features_merge_into_dataset_index() -> None:
     """SC-026: a feature table merges into SpectralDataset.index by spectrum_id."""
+    from scistudio.core.types.dataframe import DataFrame
+
     from scistudio_blocks_spectroscopy.blocks.utilities import (
         AttachFeaturesToSpectralDataset,
         SpectrumToSpectralDataset,
     )
-
-    from scistudio.core.types.dataframe import DataFrame
 
     spectra = [_spectrum("s1"), _spectrum("s2")]
     ds_out = SpectrumToSpectralDataset().run({"spectra": _support.spectra_collection(spectra)}, _config())

@@ -12,10 +12,10 @@ import tomllib
 from pathlib import Path
 from typing import cast
 
-import scistudio_blocks_spectroscopy as pkg
-
 from scistudio.blocks.base.package_info import PackageInfo
 from scistudio.testing import BlockTestHarness
+
+import scistudio_blocks_spectroscopy as pkg
 
 # SC-015 / SC-046 / SC-047: block names that must NOT appear in this draft.
 # Any calibration, clustering, PCA, reporting, or extra-analysis block is
@@ -115,7 +115,7 @@ def test_pyproject_declares_three_entry_points() -> None:
 
 def test_pyproject_lists_runtime_dependencies() -> None:
     deps = set(_pyproject()["project"]["dependencies"])
-    assert "scistudio>=0.2.1" in deps
+    assert "scistudio>=0.2.1a0" in deps
     # The full runtime set: scipy (analysis), pandas + pyarrow (tables),
     # openpyxl (xlsx IO handlers), pydantic (Meta models), numpy.
     assert {

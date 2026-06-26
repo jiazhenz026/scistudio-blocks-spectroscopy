@@ -7,12 +7,6 @@ implementation-phase tests.
 
 from __future__ import annotations
 
-from scistudio_blocks_spectroscopy.previewers import (
-    SPECTRAL_DATASET_PREVIEWER_ID,
-    SPECTRUM_PREVIEWER_ID,
-    get_previewers,
-)
-
 from scistudio.previewers.models import (
     OwnerKind,
     PreviewTarget,
@@ -20,6 +14,12 @@ from scistudio.previewers.models import (
 )
 from scistudio.previewers.registry import PreviewerRegistry
 from scistudio.previewers.router import PreviewRouter
+
+from scistudio_blocks_spectroscopy.previewers import (
+    SPECTRAL_DATASET_PREVIEWER_ID,
+    SPECTRUM_PREVIEWER_ID,
+    get_previewers,
+)
 
 _SPECTRUM_CHAIN = ("DataObject", "Series", "Spectrum")
 _DATASET_CHAIN = ("DataObject", "CompositeData", "SpectralDataset")

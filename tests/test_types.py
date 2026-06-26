@@ -15,9 +15,6 @@ import sys
 import numpy as np
 import pyarrow as pa
 import pytest
-from scistudio_blocks_spectroscopy import _support
-from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
-
 from scistudio.blocks.base.block import Block
 from scistudio.core.storage.flush_context import clear, get_output_dir, set_output_dir
 from scistudio.core.types.composite import CompositeData
@@ -25,6 +22,9 @@ from scistudio.core.types.dataframe import DataFrame
 from scistudio.core.types.registry import TypeRegistry
 from scistudio.core.types.serialization import _reconstruct_one, _serialise_one
 from scistudio.core.types.series import Series
+
+from scistudio_blocks_spectroscopy import _support
+from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
 
 
 def test_spectrum_is_series_with_canonical_names() -> None:

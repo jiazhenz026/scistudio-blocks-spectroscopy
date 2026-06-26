@@ -37,6 +37,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.types import (
     INTENSITY_COLUMN,

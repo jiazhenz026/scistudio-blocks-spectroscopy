@@ -19,6 +19,8 @@ from pathlib import Path
 import fixtures as fx
 import numpy as np
 import pytest
+from scistudio.blocks.base.config import BlockConfig
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.blocks.feature_extraction import ExtractIntensity
 from scistudio_blocks_spectroscopy.blocks.library_matching import MatchSpectralLibrary
@@ -39,8 +41,6 @@ from scistudio_blocks_spectroscopy.blocks.utilities import (
     SpectrumToSpectralDataset,
 )
 from scistudio_blocks_spectroscopy.types import Spectrum
-
-from scistudio.blocks.base.config import BlockConfig
 
 
 def _cfg(**params: object) -> BlockConfig:

@@ -25,6 +25,11 @@ from typing import Any, cast
 
 import numpy as np
 import pytest
+from scistudio.blocks.base.config import BlockConfig
+from scistudio.core.types.collection import Collection
+from scistudio.core.types.dataframe import DataFrame
+from scistudio.testing import BlockTestHarness
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.blocks import utilities
 from scistudio_blocks_spectroscopy.blocks.utilities import (
@@ -36,11 +41,6 @@ from scistudio_blocks_spectroscopy.blocks.utilities import (
     SpectrumToSpectralDataset,
 )
 from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
-
-from scistudio.blocks.base.config import BlockConfig
-from scistudio.core.types.collection import Collection
-from scistudio.core.types.dataframe import DataFrame
-from scistudio.testing import BlockTestHarness
 
 _UTILITY_BLOCK_NAMES = {
     "LoadSpectrum",

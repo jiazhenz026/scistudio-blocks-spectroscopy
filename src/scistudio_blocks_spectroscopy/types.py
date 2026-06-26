@@ -23,7 +23,6 @@ from typing import Any, ClassVar
 import pyarrow as pa
 import pyarrow.types as pat
 from pydantic import BaseModel, ConfigDict
-
 from scistudio.core.types.composite import CompositeData
 from scistudio.core.types.dataframe import DataFrame
 from scistudio.core.types.series import Series

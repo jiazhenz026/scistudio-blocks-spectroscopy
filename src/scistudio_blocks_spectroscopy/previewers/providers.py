@@ -359,7 +359,8 @@ def spectrum_resource_provider(request: PreviewRequest, resource_id: str, params
 
 def _export_spectrum_csv(envelope: PreviewEnvelope, resource_id: str, max_bytes: int) -> dict[str, Any]:
     payload = envelope.payload if isinstance(envelope.payload, dict) else {}
-    table = payload.get("table") if isinstance(payload.get("table"), dict) else {}
+    table_raw = payload.get("table")
+    table = table_raw if isinstance(table_raw, dict) else {}
     columns = [str(column) for column in table.get("columns", [])] or [_LAMBDA, _INTENSITY]
     rows = [row for row in table.get("rows", []) if isinstance(row, dict)]
     if not rows:
@@ -394,9 +395,12 @@ def _export_spectrum_figure(envelope: PreviewEnvelope, resource_id: str, fmt: st
     points = _finite_points(payload.get("points", []))
     if not points:
         raise ProviderError("spectrum figure export has no plottable points", detail={"resource_id": resource_id})
-    axes = payload.get("axes") if isinstance(payload.get("axes"), dict) else {}
-    x_axis = axes.get("x") if isinstance(axes.get("x"), dict) else {}
-    y_axis = axes.get("y") if isinstance(axes.get("y"), dict) else {}
+    axes_raw = payload.get("axes")
+    axes = axes_raw if isinstance(axes_raw, dict) else {}
+    x_axis_raw = axes.get("x")
+    x_axis = x_axis_raw if isinstance(x_axis_raw, dict) else {}
+    y_axis_raw = axes.get("y")
+    y_axis = y_axis_raw if isinstance(y_axis_raw, dict) else {}
     x_label = str(x_axis.get("label") or x_axis.get("name") or _LAMBDA)
     y_label = str(y_axis.get("label") or y_axis.get("name") or _INTENSITY)
     data = _render_line_figure(points, x_label, y_label, fmt)

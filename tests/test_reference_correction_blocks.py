@@ -16,6 +16,11 @@ from typing import Any
 
 import numpy as np
 import pytest
+from scistudio.blocks.base.config import BlockConfig
+from scistudio.blocks.process.process_block import ProcessBlock
+from scistudio.core.types.collection import Collection
+from scistudio.testing import BlockTestHarness
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.blocks import reference_correction
 from scistudio_blocks_spectroscopy.blocks.reference_correction import (
@@ -23,11 +28,6 @@ from scistudio_blocks_spectroscopy.blocks.reference_correction import (
     SubtractReferenceSpectrum,
 )
 from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
-
-from scistudio.blocks.base.config import BlockConfig
-from scistudio.blocks.process.process_block import ProcessBlock
-from scistudio.core.types.collection import Collection
-from scistudio.testing import BlockTestHarness
 
 _REFERENCE_BLOCKS = (SubtractReferenceSpectrum, DivideByReferenceSpectrum)
 

@@ -14,15 +14,15 @@ from __future__ import annotations
 from typing import Any, cast
 
 import numpy as np
+from scistudio.blocks.base.config import BlockConfig
+from scistudio.core.types.collection import Collection
+from scistudio.testing import BlockTestHarness
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.blocks import library_matching
 from scistudio_blocks_spectroscopy.blocks.library_matching import MatchSpectralLibrary
 from scistudio_blocks_spectroscopy.blocks.utilities import SpectrumToSpectralDataset
 from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
-
-from scistudio.blocks.base.config import BlockConfig
-from scistudio.core.types.collection import Collection
-from scistudio.testing import BlockTestHarness
 
 
 def _config(**params: Any) -> BlockConfig:
