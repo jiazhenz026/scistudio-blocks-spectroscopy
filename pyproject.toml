@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scistudio-blocks-spectroscopy"
-version = "0.1.0"
+version = "0.1.1"
 description = "General 1-D spectroscopy blocks (Raman, FTIR, UV-Vis, fluorescence, NIR) for SciStudio."
 readme = "README.md"
 license = { text = "MIT" }

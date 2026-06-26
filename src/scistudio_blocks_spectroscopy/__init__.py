@@ -54,7 +54,7 @@ from scistudio_blocks_spectroscopy.blocks.utilities import (
 from scistudio_blocks_spectroscopy.previewers import get_previewers
 from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum, get_types
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 # OTA hot-update source (#1784). Keep in sync with [tool.scistudio.ota]
 # in pyproject.toml; validate_contract.py enforces they match.
