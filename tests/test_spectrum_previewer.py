@@ -18,12 +18,6 @@ from typing import cast
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-from scistudio_blocks_spectroscopy.previewers import (
-    SPECTRUM_PREVIEWER_ID,
-    get_previewers,
-)
-from scistudio_blocks_spectroscopy.previewers.providers import spectrum_provider, spectrum_resource_provider
-
 from scistudio.previewers.data_access import PreviewDataAccess
 from scistudio.previewers.models import (
     EnvelopeKind,
@@ -34,6 +28,12 @@ from scistudio.previewers.models import (
     PreviewTarget,
     TargetKind,
 )
+
+from scistudio_blocks_spectroscopy.previewers import (
+    SPECTRUM_PREVIEWER_ID,
+    get_previewers,
+)
+from scistudio_blocks_spectroscopy.previewers.providers import spectrum_provider, spectrum_resource_provider
 
 _SPECTRUM_CHAIN = ("DataObject", "Series", "Spectrum")
 

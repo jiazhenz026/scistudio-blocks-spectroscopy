@@ -15,12 +15,12 @@ import re
 from typing import Any, ClassVar
 
 import numpy as np
-
 from scistudio.blocks.base.config import BlockConfig
 from scistudio.blocks.base.ports import InputPort, OutputPort
 from scistudio.blocks.process.process_block import ProcessBlock
 from scistudio.core.types.collection import Collection
 from scistudio.core.types.dataframe import DataFrame
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.types import Spectrum
 

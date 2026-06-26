@@ -12,14 +12,14 @@ from __future__ import annotations
 import fixtures as fx
 import numpy as np
 import pytest
-from scistudio_blocks_spectroscopy import _support
-from scistudio_blocks_spectroscopy.blocks.peak_fitting import FitPeak
-from scistudio_blocks_spectroscopy.types import Spectrum
-
 from scistudio.blocks.base.config import BlockConfig
 from scistudio.core.types.collection import Collection
 from scistudio.core.types.dataframe import DataFrame
 from scistudio.testing import BlockTestHarness
+
+from scistudio_blocks_spectroscopy import _support
+from scistudio_blocks_spectroscopy.blocks.peak_fitting import FitPeak
+from scistudio_blocks_spectroscopy.types import Spectrum
 
 
 def _cfg(**params: object) -> BlockConfig:

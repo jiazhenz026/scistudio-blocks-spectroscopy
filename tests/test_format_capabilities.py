@@ -21,6 +21,9 @@ from __future__ import annotations
 from typing import ClassVar
 
 import pytest
+from scistudio.blocks.base.config import BlockConfig
+from scistudio.blocks.io.capabilities import FormatCapability, MetadataFidelity
+
 from scistudio_blocks_spectroscopy.blocks.utilities import (
     LoadSpectralDataset,
     LoadSpectrum,
@@ -29,9 +32,6 @@ from scistudio_blocks_spectroscopy.blocks.utilities import (
     _resolve_dataset_io_capability,
 )
 from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
-
-from scistudio.blocks.base.config import BlockConfig
-from scistudio.blocks.io.capabilities import FormatCapability, MetadataFidelity
 
 _IO_BLOCKS = [LoadSpectrum, SaveSpectrum, LoadSpectralDataset, SaveSpectralDataset]
 

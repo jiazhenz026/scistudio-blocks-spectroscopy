@@ -27,10 +27,10 @@ from typing import Any, cast
 
 import numpy as np
 import pyarrow as pa
-
 from scistudio.core.types.base import DataObject, FrameworkMeta
 from scistudio.core.types.collection import Collection
 from scistudio.core.types.dataframe import DataFrame
+
 from scistudio_blocks_spectroscopy.types import (
     INTENSITY_COLUMN,
     LAMBDA_COLUMN,

@@ -13,11 +13,11 @@ from typing import Any
 import fixtures as fx
 import numpy as np
 import pytest
-from scistudio_blocks_spectroscopy import _support
-from scistudio_blocks_spectroscopy.blocks.unmixing import SpectralUnmixing
-
 from scistudio.blocks.base.config import BlockConfig
 from scistudio.testing import BlockTestHarness
+
+from scistudio_blocks_spectroscopy import _support
+from scistudio_blocks_spectroscopy.blocks.unmixing import SpectralUnmixing
 
 
 def _cfg(**params: object) -> BlockConfig:

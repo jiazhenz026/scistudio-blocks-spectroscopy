@@ -12,12 +12,12 @@ from typing import Any
 
 import fixtures as fx
 import numpy as np
+from scistudio.blocks.base.config import BlockConfig
+from scistudio.testing import BlockTestHarness
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.blocks.library_matching import MatchSpectralLibrary
 from scistudio_blocks_spectroscopy.types import Spectrum
-
-from scistudio.blocks.base.config import BlockConfig
-from scistudio.testing import BlockTestHarness
 
 
 def _cfg(**params: object) -> BlockConfig:

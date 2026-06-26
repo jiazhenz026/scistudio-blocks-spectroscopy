@@ -21,16 +21,6 @@ from typing import cast
 
 import pyarrow as pa
 import pyarrow.parquet as pq
-from scistudio_blocks_spectroscopy.previewers import (
-    SPECTRAL_DATASET_PREVIEWER_ID,
-    get_previewers,
-)
-from scistudio_blocks_spectroscopy.previewers.providers import (
-    _slot_ref,
-    compute_dataset_diagnostics,
-    spectral_dataset_provider,
-)
-
 from scistudio.core.storage.ref import StorageReference
 from scistudio.previewers.data_access import PreviewDataAccess
 from scistudio.previewers.models import (
@@ -41,6 +31,16 @@ from scistudio.previewers.models import (
     PreviewRequest,
     PreviewTarget,
     TargetKind,
+)
+
+from scistudio_blocks_spectroscopy.previewers import (
+    SPECTRAL_DATASET_PREVIEWER_ID,
+    get_previewers,
+)
+from scistudio_blocks_spectroscopy.previewers.providers import (
+    _slot_ref,
+    compute_dataset_diagnostics,
+    spectral_dataset_provider,
 )
 
 _DATASET_CHAIN = ("DataObject", "CompositeData", "SpectralDataset")

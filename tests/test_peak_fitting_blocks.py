@@ -14,13 +14,13 @@ from typing import Any
 
 import numpy as np
 import pytest
+from scistudio.blocks.base.config import BlockConfig
+from scistudio.testing import BlockTestHarness
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.blocks import peak_fitting
 from scistudio_blocks_spectroscopy.blocks.peak_fitting import FitPeak
 from scistudio_blocks_spectroscopy.types import Spectrum
-
-from scistudio.blocks.base.config import BlockConfig
-from scistudio.testing import BlockTestHarness
 
 
 def _config(**params: Any) -> BlockConfig:

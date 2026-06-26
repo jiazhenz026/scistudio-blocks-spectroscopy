@@ -15,6 +15,7 @@ finds it at the top level.
 from __future__ import annotations
 
 from scistudio.blocks.base.package_info import PackageInfo
+
 from scistudio_blocks_spectroscopy.blocks import BLOCKS as _SPECTROSCOPY_BLOCKS
 from scistudio_blocks_spectroscopy.blocks.feature_extraction import (
     CalculateAUC,

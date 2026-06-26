@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from scistudio_blocks_spectroscopy import _support as support
-from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
-
 from scistudio.core.types.collection import Collection
 from scistudio.core.types.dataframe import DataFrame
+
+from scistudio_blocks_spectroscopy import _support as support
+from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
 
 
 def _gaussian(lam: np.ndarray, center: float, width: float) -> np.ndarray:

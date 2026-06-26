@@ -17,6 +17,16 @@ from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+from scistudio.previewers.data_access import PreviewDataAccess
+from scistudio.previewers.models import (
+    EnvelopeKind,
+    PreviewerSpec,
+    PreviewLimits,
+    PreviewRequest,
+    PreviewTarget,
+    TargetKind,
+)
+
 from scistudio_blocks_spectroscopy.previewers import (
     SPECTRAL_DATASET_PREVIEWER_ID,
     SPECTRUM_PREVIEWER_ID,
@@ -26,16 +36,6 @@ from scistudio_blocks_spectroscopy.previewers.providers import (
     compute_dataset_diagnostics,
     spectral_dataset_provider,
     spectrum_provider,
-)
-
-from scistudio.previewers.data_access import PreviewDataAccess
-from scistudio.previewers.models import (
-    EnvelopeKind,
-    PreviewerSpec,
-    PreviewLimits,
-    PreviewRequest,
-    PreviewTarget,
-    TargetKind,
 )
 
 _SPECTRUM_CHAIN = ("DataObject", "Series", "Spectrum")

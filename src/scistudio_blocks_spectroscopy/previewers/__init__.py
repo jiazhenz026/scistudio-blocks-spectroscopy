@@ -20,6 +20,7 @@ from scistudio.previewers.models import (
     OwnerKind,
     PreviewerSpec,
 )
+
 from scistudio_blocks_spectroscopy.previewers.providers import (
     spectral_dataset_provider,
     spectrum_provider,

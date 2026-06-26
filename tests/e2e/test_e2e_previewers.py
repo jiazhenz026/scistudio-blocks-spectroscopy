@@ -17,6 +17,16 @@ import fixtures as fx
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
+from scistudio.previewers.data_access import PreviewDataAccess
+from scistudio.previewers.models import (
+    EnvelopeKind,
+    PreviewerSpec,
+    PreviewLimits,
+    PreviewRequest,
+    PreviewTarget,
+    TargetKind,
+)
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.previewers import (
     SPECTRAL_DATASET_PREVIEWER_ID,
@@ -29,16 +39,6 @@ from scistudio_blocks_spectroscopy.previewers.providers import (
     spectrum_provider,
 )
 from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
-
-from scistudio.previewers.data_access import PreviewDataAccess
-from scistudio.previewers.models import (
-    EnvelopeKind,
-    PreviewerSpec,
-    PreviewLimits,
-    PreviewRequest,
-    PreviewTarget,
-    TargetKind,
-)
 
 _SPECTRUM_CHAIN = ("DataObject", "Series", "Spectrum")
 _DATASET_CHAIN = ("DataObject", "CompositeData", "SpectralDataset")
@@ -186,9 +186,9 @@ def test_large_dataset_preview_reports_partial_bounded_scan(tmp_path: Path) -> N
 
 
 def test_dataset_built_from_collection_previews_clean(tmp_path: Path) -> None:
-    from scistudio_blocks_spectroscopy.blocks.utilities import SpectrumToSpectralDataset
-
     from scistudio.blocks.base.config import BlockConfig
+
+    from scistudio_blocks_spectroscopy.blocks.utilities import SpectrumToSpectralDataset
 
     # Small grid -> the whole spectra slot fits in one bounded page (clean scan).
     specs, _ = fx.make_collection(n=3, grid=np.linspace(400.0, 420.0, 21))

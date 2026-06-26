@@ -14,6 +14,11 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 import pytest
+from scistudio.blocks.base.block import Block
+from scistudio.blocks.base.config import BlockConfig
+from scistudio.core.types.collection import Collection
+from scistudio.testing import BlockTestHarness
+
 from scistudio_blocks_spectroscopy import _support
 from scistudio_blocks_spectroscopy.blocks.utilities import (
     AttachFeaturesToSpectralDataset,
@@ -23,11 +28,6 @@ from scistudio_blocks_spectroscopy.blocks.utilities import (
     SpectrumToSpectralDataset,
 )
 from scistudio_blocks_spectroscopy.types import SpectralDataset, Spectrum
-
-from scistudio.blocks.base.block import Block
-from scistudio.blocks.base.config import BlockConfig
-from scistudio.core.types.collection import Collection
-from scistudio.testing import BlockTestHarness
 
 _LAM = np.linspace(400.0, 1000.0, 8)
 
