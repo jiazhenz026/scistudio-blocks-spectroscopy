@@ -27,7 +27,8 @@ All notable changes to this package are documented here. The format follows
   - no longer imports `scistudio.core.storage.ref` or constructs a
     `StorageReference`; the type is referenced (annotations / pass-through) only
     via the public `scistudio.core.types` re-export.
-  Requires core **`scistudio>=0.3.1`** (raised floor): the typed `request.storage`
+  Requires core **`scistudio>=0.3.1a0`** (raised floor; alpha-inclusive, matching
+  the current core line): the typed `request.storage`
   field landed in SciStudio #1829 (ADR-052 §8.5) and `composite_slot_ref` in
   SciStudio #1830 (ADR-052 §8.2). Tests now build composites via the core
   `CompositeStore` (real `manifest.json`), matching how a `SpectralDataset`
