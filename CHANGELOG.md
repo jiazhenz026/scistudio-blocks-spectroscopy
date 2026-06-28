@@ -6,6 +6,8 @@ All notable changes to this package are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-06-27
+
 - OTA hot-update support (#1784): self-declared update source via
   `PackageInfo.ota` / `[tool.scistudio.ota]`; `scripts/ota_publish.py`
   publishes manifest + snapshot to the package's own `ota-<channel>`
