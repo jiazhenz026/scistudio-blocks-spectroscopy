@@ -11,6 +11,28 @@ All notable changes to this package are documented here. The format follows
   publishes manifest + snapshot to the package's own `ota-<channel>`
   GitHub pre-release for the in-app Package Manager.
 
+### Changed
+
+- Previewer rewritten onto the ADR-052 §8 public previewer authoring API, so
+  this package is the exemplary reference for package-owned previewers (#7).
+  Behavior-preserving for users; internal storage wiring only:
+  - reads storage via the typed `request.storage` / `request.record_metadata`
+    instead of the `request.query["_storage"]` / `["_record_metadata"]` carrier;
+  - resolves composite slots via the sanctioned
+    `PreviewDataAccess.composite_slot_ref(request.storage, slot)` and drops the
+    local `_slot_ref` / `_manifest_slot_path` / `_slot_file_candidate` /
+    `_format_for_path` heuristics that reverse-engineered core's on-disk layout;
+  - imports `sanitize_svg` from the public `scistudio.previewers.helpers`
+    instead of the core-internal `scistudio.previewers.fallbacks`;
+  - no longer imports `scistudio.core.storage.ref` or constructs a
+    `StorageReference`; the type is referenced (annotations / pass-through) only
+    via the public `scistudio.core.types` re-export.
+  Requires core **`scistudio>=0.3.1`** (raised floor): the typed `request.storage`
+  field landed in SciStudio #1829 (ADR-052 §8.5) and `composite_slot_ref` in
+  SciStudio #1830 (ADR-052 §8.2). Tests now build composites via the core
+  `CompositeStore` (real `manifest.json`), matching how a `SpectralDataset`
+  actually persists.
+
 ### Added
 
 - Package governance from `scistudio-package-template`: CI (lint, type, test,

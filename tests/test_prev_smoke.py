@@ -17,6 +17,8 @@ from pathlib import Path
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+from scistudio.core.storage.composite_store import CompositeStore
+from scistudio.core.types import StorageReference
 from scistudio.previewers.data_access import PreviewDataAccess
 from scistudio.previewers.models import (
     EnvelopeKind,
@@ -53,9 +55,12 @@ def _request(
     storage: dict,
     record_md: dict | None = None,
 ) -> PreviewRequest:
-    query: dict = {"_storage": storage}
-    if record_md is not None:
-        query["_record_metadata"] = record_md
+    storage_ref = StorageReference(
+        backend=str(storage.get("backend", "filesystem")),
+        path=str(storage.get("path", "r")),
+        format=storage.get("format"),
+        metadata=storage.get("metadata"),
+    )
     return PreviewRequest(
         target=PreviewTarget(
             kind=TargetKind.DATA_REF,
@@ -64,10 +69,12 @@ def _request(
             type_chain=chain,
         ),
         spec=_spec(previewer_id),
-        query=query,
+        query={},
         data_access=PreviewDataAccess(),
         limits=PreviewLimits(),
         session_id=None,
+        storage=storage_ref,
+        record_metadata=record_md or {},
     )
 
 
@@ -159,11 +166,17 @@ def test_spectrum_provider_error_envelope_on_bad_input() -> None:
 
 
 def _dataset_dir(tmp_path: Path, index_cols: dict, spectra_cols: dict) -> Path:
-    root = tmp_path / "dataset"
-    root.mkdir()
-    _write_parquet(root / "index.parquet", index_cols)
-    _write_parquet(root / "spectra.parquet", spectra_cols)
-    return root
+    """Persist a SpectralDataset-shaped composite via the core CompositeStore.
+
+    Writes a real ``manifest.json`` of slot refs, the way a ``SpectralDataset``
+    (a ``CompositeData`` subclass) actually lands on disk, so the provider
+    resolves slots through ``composite_slot_ref``.
+    """
+    ref = CompositeStore().write(
+        {"index": ("arrow", pa.table(index_cols)), "spectra": ("arrow", pa.table(spectra_cols))},
+        StorageReference(backend="composite", path=str(tmp_path / "dataset")),
+    )
+    return Path(ref.path)
 
 
 def test_spectral_dataset_provider_builds_composite_envelope(tmp_path: Path) -> None:
@@ -179,7 +192,7 @@ def test_spectral_dataset_provider_builds_composite_envelope(tmp_path: Path) -> 
     request = _request(
         SPECTRAL_DATASET_PREVIEWER_ID,
         _DATASET_CHAIN,
-        storage={"backend": "filesystem", "path": str(root), "format": "parquet"},
+        storage={"backend": "composite", "path": str(root), "format": "composite"},
         record_md={"slots": {"index": "DataFrame", "spectra": "DataFrame"}, "dataset_name": "demo"},
     )
     env = spectral_dataset_provider(request)
@@ -228,7 +241,7 @@ def test_spectral_dataset_provider_detects_health_issues(tmp_path: Path) -> None
     request = _request(
         SPECTRAL_DATASET_PREVIEWER_ID,
         _DATASET_CHAIN,
-        storage={"backend": "filesystem", "path": str(root), "format": "parquet"},
+        storage={"backend": "composite", "path": str(root), "format": "composite"},
         record_md={"slots": {"index": "DataFrame", "spectra": "DataFrame"}},
     )
     env = spectral_dataset_provider(request)

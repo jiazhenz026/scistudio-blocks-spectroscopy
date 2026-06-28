@@ -18,6 +18,7 @@ from typing import cast
 
 import pyarrow as pa
 import pyarrow.parquet as pq
+from scistudio.core.types import StorageReference
 from scistudio.previewers.data_access import PreviewDataAccess
 from scistudio.previewers.models import (
     EnvelopeKind,
@@ -52,20 +53,24 @@ def _request(
     extra_query: dict | None = None,
     data_access: PreviewDataAccess | None = None,
 ) -> PreviewRequest:
-    request_query: dict = {"_storage": storage or {"backend": "filesystem", "path": str(path), "format": "parquet"}}
-    if record_md is not None:
-        request_query["_record_metadata"] = record_md
-    if extra_query is not None:
-        request_query.update(extra_query)
+    storage_spec = storage or {"backend": "filesystem", "path": str(path), "format": "parquet"}
+    storage_ref = StorageReference(
+        backend=str(storage_spec.get("backend", "filesystem")),
+        path=str(storage_spec.get("path", path)),
+        format=storage_spec.get("format"),
+        metadata=storage_spec.get("metadata"),
+    )
     return PreviewRequest(
         target=PreviewTarget(
             kind=TargetKind.DATA_REF, ref=str(path), recorded_type="Spectrum", type_chain=_SPECTRUM_CHAIN
         ),
         spec=_spec(),
-        query=request_query,
+        query=dict(extra_query or {}),
         data_access=data_access or PreviewDataAccess(),
         limits=PreviewLimits(),
         session_id=None,
+        storage=storage_ref,
+        record_metadata=record_md or {},
     )
 
 

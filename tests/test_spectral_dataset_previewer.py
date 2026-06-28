@@ -1,11 +1,13 @@
 """SpectralDataset previewer contract tests (SC-004, SC-005, SC-006).
 
 Drives the package dataset provider against a real bounded ``PreviewDataAccess``
-reading on-disk parquet slot tables, asserting:
+reading a real core ``CompositeStore`` composite (the way a ``SpectralDataset``
+actually persists: a ``manifest.json`` of slot refs), asserting:
 
 - exact ``SpectralDataset`` refs route to the dataset previewer (SC-004);
 - the envelope is a COMPOSITE envelope exposing the slot inventory + a paginated
-  index table;
+  index table, with slots resolved through the sanctioned
+  ``PreviewDataAccess.composite_slot_ref`` (ADR-052 §8.5);
 - grouped plotting is available over arbitrary index columns including
   ``material`` and a preparation/condition column (SC-005);
 - export/save controls for figures, visible rows, and grouped summaries exist
@@ -20,8 +22,8 @@ from pathlib import Path
 from typing import cast
 
 import pyarrow as pa
-import pyarrow.parquet as pq
-from scistudio.core.storage.ref import StorageReference
+from scistudio.core.storage.composite_store import CompositeStore
+from scistudio.core.types import StorageReference
 from scistudio.previewers.data_access import PreviewDataAccess
 from scistudio.previewers.models import (
     EnvelopeKind,
@@ -38,7 +40,6 @@ from scistudio_blocks_spectroscopy.previewers import (
     get_previewers,
 )
 from scistudio_blocks_spectroscopy.previewers.providers import (
-    _slot_ref,
     compute_dataset_diagnostics,
     spectral_dataset_provider,
 )
@@ -53,49 +54,43 @@ def _spec() -> PreviewerSpec:
     raise AssertionError(SPECTRAL_DATASET_PREVIEWER_ID)
 
 
+def _write_dataset(tmp_path: Path, *, index_cols: dict, spectra_cols: dict) -> StorageReference:
+    """Persist a SpectralDataset-shaped composite via the core CompositeStore.
+
+    This mirrors how a real ``SpectralDataset`` (a ``CompositeData`` subclass)
+    lands on disk — a ``manifest.json`` recording each slot's backend/path/format
+    — so the previewer resolves slots through ``composite_slot_ref`` against the
+    authoritative manifest, exactly as in production.
+    """
+    return CompositeStore().write(
+        {
+            "index": ("arrow", pa.table(index_cols)),
+            "spectra": ("arrow", pa.table(spectra_cols)),
+        },
+        StorageReference(backend="composite", path=str(tmp_path / "dataset")),
+    )
+
+
 def _request(
-    root: Path,
+    storage: StorageReference,
     record_md: dict,
     extra_query: dict | None = None,
-    *,
-    storage_backend: str = "filesystem",
 ) -> PreviewRequest:
-    query = {
-        "_storage": {"backend": storage_backend, "path": str(root), "format": "parquet"},
-        "_record_metadata": record_md,
-    }
-    if extra_query:
-        query.update(extra_query)
     return PreviewRequest(
         target=PreviewTarget(
             kind=TargetKind.DATA_REF,
-            ref=str(root),
+            ref=storage.path,
             recorded_type="SpectralDataset",
             type_chain=_DATASET_CHAIN,
         ),
         spec=_spec(),
-        query=query,
+        query=dict(extra_query or {}),
         data_access=PreviewDataAccess(),
         limits=PreviewLimits(),
         session_id=None,
+        storage=storage,
+        record_metadata=record_md,
     )
-
-
-def _dataset_dir(tmp_path: Path, index_cols: dict, spectra_cols: dict) -> Path:
-    root = tmp_path / "dataset"
-    root.mkdir()
-    pq.write_table(pa.table(index_cols), root / "index.parquet")
-    pq.write_table(pa.table(spectra_cols), root / "spectra.parquet")
-    return root
-
-
-def _dataset_composite_dir(tmp_path: Path, index_cols: dict, spectra_cols: dict) -> Path:
-    root = tmp_path / "dataset_composite"
-    (root / "index").mkdir(parents=True)
-    (root / "spectra").mkdir(parents=True)
-    pq.write_table(pa.table(index_cols), root / "index" / "data.parquet")
-    pq.write_table(pa.table(spectra_cols), root / "spectra" / "data.parquet")
-    return root
 
 
 def test_dataset_previewer_is_package_owned() -> None:
@@ -107,7 +102,7 @@ def test_dataset_previewer_is_package_owned() -> None:
 
 
 def test_dataset_provider_builds_composite_envelope_with_index_table(tmp_path: Path) -> None:
-    root = _dataset_dir(
+    storage = _write_dataset(
         tmp_path,
         index_cols={"spectrum_id": ["a", "b"], "material": ["gold", "silver"], "prep": ["wet", "dry"]},
         spectra_cols={
@@ -117,7 +112,7 @@ def test_dataset_provider_builds_composite_envelope_with_index_table(tmp_path: P
         },
     )
     env = spectral_dataset_provider(
-        _request(root, {"slots": {"index": "DataFrame", "spectra": "DataFrame"}, "dataset_name": "demo"})
+        _request(storage, {"slots": {"index": "DataFrame", "spectra": "DataFrame"}, "dataset_name": "demo"})
     )
     assert env.previewer_id == SPECTRAL_DATASET_PREVIEWER_ID
     assert env.kind is EnvelopeKind.COMPOSITE
@@ -131,20 +126,22 @@ def test_dataset_provider_builds_composite_envelope_with_index_table(tmp_path: P
     assert {"groupable_columns", "selected_ids", "plot_mode"} <= set(env.payload["controls"])
 
 
-def test_dataset_provider_resolves_composite_slot_data_parquet(tmp_path: Path) -> None:
-    root = _dataset_composite_dir(
+def test_dataset_provider_resolves_slots_via_composite_manifest(tmp_path: Path) -> None:
+    # ADR-052 §8.5: the provider resolves slots through the sanctioned
+    # composite_slot_ref against the core CompositeStore manifest — no path
+    # reverse-engineering, no StorageReference construction.
+    storage = _write_dataset(
         tmp_path,
         index_cols={"spectrum_id": ["a"], "material": ["gold"]},
         spectra_cols={"spectrum_id": ["a"], "lambda": [1.0], "intensity": [10.0]},
     )
-    index_ref = _slot_ref(StorageReference(backend="composite", path=str(root), format="composite"), {}, "index")
+    access = PreviewDataAccess()
+    index_ref = access.composite_slot_ref(storage, "index")
     assert index_ref is not None
-    assert index_ref.backend == "filesystem"
     assert index_ref.format == "parquet"
+    assert index_ref.path.endswith("index/data.parquet")
 
-    env = spectral_dataset_provider(
-        _request(root, {"slots": {"index": "DataFrame", "spectra": "DataFrame"}}, storage_backend="composite")
-    )
+    env = spectral_dataset_provider(_request(storage, {"slots": {"index": "DataFrame", "spectra": "DataFrame"}}))
     assert env.payload["index_table"]["available"] is True
     assert env.payload["index_table"]["rows"][0]["spectrum_id"] == "a"
     assert env.payload["spectra_table"]["available"] is True
@@ -152,7 +149,7 @@ def test_dataset_provider_resolves_composite_slot_data_parquet(tmp_path: Path) -
 
 
 def test_dataset_previewer_filters_index_and_spectra_by_index_column(tmp_path: Path) -> None:
-    root = _dataset_dir(
+    storage = _write_dataset(
         tmp_path,
         index_cols={
             "spectrum_id": ["a", "b", "c"],
@@ -167,7 +164,7 @@ def test_dataset_previewer_filters_index_and_spectra_by_index_column(tmp_path: P
     )
     env = spectral_dataset_provider(
         _request(
-            root,
+            storage,
             {"slots": {"index": "DataFrame", "spectra": "DataFrame"}},
             extra_query={"filter_column": "material", "filter_value": "gold"},
         )
@@ -186,7 +183,7 @@ def test_dataset_previewer_filters_index_and_spectra_by_index_column(tmp_path: P
 
 def test_dataset_previewer_supports_grouping_over_arbitrary_index_columns(tmp_path: Path) -> None:
     """SC-005: grouped plotting works over arbitrary index columns (material + prep)."""
-    root = _dataset_dir(
+    storage = _write_dataset(
         tmp_path,
         index_cols={"spectrum_id": ["a", "b"], "material": ["gold", "silver"], "prep": ["wet", "dry"]},
         spectra_cols={
@@ -197,7 +194,7 @@ def test_dataset_previewer_supports_grouping_over_arbitrary_index_columns(tmp_pa
     )
     env = spectral_dataset_provider(
         _request(
-            root,
+            storage,
             {"slots": {"index": "DataFrame", "spectra": "DataFrame"}},
             extra_query={"group_by": "material", "color_by": "prep", "selected_ids": ["a"]},
         )
@@ -216,12 +213,12 @@ def test_dataset_previewer_supports_grouping_over_arbitrary_index_columns(tmp_pa
 
 def test_dataset_previewer_export_controls_exist(tmp_path: Path) -> None:
     """SC-006: figure + visible-row + grouped-summary export controls exist."""
-    root = _dataset_dir(
+    storage = _write_dataset(
         tmp_path,
         index_cols={"spectrum_id": ["a"], "material": ["gold"]},
         spectra_cols={"spectrum_id": ["a"], "lambda": [1.0], "intensity": [10.0]},
     )
-    env = spectral_dataset_provider(_request(root, {"slots": {"index": "DataFrame", "spectra": "DataFrame"}}))
+    env = spectral_dataset_provider(_request(storage, {"slots": {"index": "DataFrame", "spectra": "DataFrame"}}))
     resource_ids = {r.resource_id for r in env.resources}
     assert {"slot:index", "slot:spectra"} <= resource_ids
     assert {
