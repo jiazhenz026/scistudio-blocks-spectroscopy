@@ -46,7 +46,7 @@ spectroscopy = "scistudio_blocks_spectroscopy.previewers:get_previewers"
 [tool.scistudio.ota]
 manifest_url = "https://github.com/jiazhenz026/scistudio-blocks-spectroscopy/releases/download/ota-alpha/manifest.json"
 channel = "alpha"
-min_core_base = "0.2.1"
+min_core_base = "0.3.1"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/scistudio_blocks_spectroscopy"]

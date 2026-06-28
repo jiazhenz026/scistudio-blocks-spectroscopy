@@ -30,7 +30,9 @@ All notable changes to this package are documented here. The format follows
   Requires core **`scistudio>=0.3.1a0`** (raised floor; alpha-inclusive, matching
   the current core line): the typed `request.storage`
   field landed in SciStudio #1829 (ADR-052 §8.5) and `composite_slot_ref` in
-  SciStudio #1830 (ADR-052 §8.2). Tests now build composites via the core
+  SciStudio #1830 (ADR-052 §8.2). The OTA `[tool.scistudio.ota].min_core_base`
+  is raised `0.2.1` → `0.3.1` to match, so core 0.2.x clients are not offered an
+  update that calls APIs they lack. Tests now build composites via the core
   `CompositeStore` (real `manifest.json`), matching how a `SpectralDataset`
   actually persists.
 

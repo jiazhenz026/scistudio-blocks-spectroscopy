@@ -65,5 +65,6 @@ series/composite renderers when the package is absent.
 
 ## Compatibility
 
-- Requires `scistudio>=0.2.1a0`.
+- Requires `scistudio>=0.3.1a0` (previewer reads the typed `request.storage` and
+  `PreviewDataAccess.composite_slot_ref`, ADR-052 §8.2/§8.5).
 - Python `>=3.11`.
