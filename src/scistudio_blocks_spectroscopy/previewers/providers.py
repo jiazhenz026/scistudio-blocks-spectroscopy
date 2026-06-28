@@ -31,9 +31,9 @@ import io
 import json
 import logging
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from scistudio.core.storage.ref import StorageReference
+from scistudio.previewers.helpers import sanitize_svg
 from scistudio.previewers.models import (
     EnvelopeKind,
     PreviewEnvelope,
@@ -42,6 +42,12 @@ from scistudio.previewers.models import (
     PreviewResource,
     ProviderError,
 )
+
+if TYPE_CHECKING:
+    # Type-only: the StorageReference the runtime hands us on ``request.storage``
+    # is read and passed through; an author never constructs it (ADR-052 §8.5).
+    # Imported from the PUBLIC ``core.types`` re-export, never ``core.storage.ref``.
+    from scistudio.core.types import StorageReference
 
 logger = logging.getLogger(__name__)
 
@@ -64,25 +70,28 @@ _FIGURE_MEDIA = {"svg": "image/svg+xml", "png": "image/png", "pdf": "application
 
 
 # ---------------------------------------------------------------------------
-# Request helpers (mirror scistudio.previewers.fallbacks / imaging conventions)
+# Request helpers (ADR-052 §8.5 author surface: typed request.storage / record_metadata)
 # ---------------------------------------------------------------------------
 
 
-def _ref_for(request: PreviewRequest) -> StorageReference:
-    """Build the storage reference from the session-provided query hints."""
-    storage = request.query.get("_storage") or {}
-    return StorageReference(
-        backend=str(storage.get("backend", "filesystem")),
-        path=str(storage.get("path", request.target.ref)),
-        format=storage.get("format"),
-        metadata=storage.get("metadata"),
-    )
+def _ref_for(request: PreviewRequest) -> StorageReference | None:
+    """Return the runtime-resolved storage reference (ADR-052 §8.5, FR-009).
+
+    The session manager resolves the catalog ref and sets it on
+    ``request.storage``; the provider reads it directly and forwards it to
+    ``request.data_access`` — it never constructs a ``StorageReference`` or
+    inspects the ``_storage`` query carrier.
+    """
+    return request.storage
 
 
 def _record_metadata(request: PreviewRequest) -> dict[str, Any]:
-    """Return the record metadata dict the session manager attached, if any."""
-    md = request.query.get("_record_metadata")
-    return md if isinstance(md, dict) else {}
+    """Return the recorded data-record metadata (ADR-052 §8.5).
+
+    Read from the typed ``request.record_metadata`` the session manager
+    populates, not the ``_record_metadata`` query carrier.
+    """
+    return dict(request.record_metadata)
 
 
 def _page_size(request: PreviewRequest, default: int = 256) -> int:
@@ -227,6 +236,8 @@ def spectrum_provider(request: PreviewRequest) -> PreviewEnvelope:
     renderer when the package viewer asset is unavailable (FR-018/FR-026).
     """
     ref = _ref_for(request)
+    if ref is None:
+        return _error_envelope(request, "spectrum preview failed: no storage reference on the request")
     record_md = _record_metadata(request)
     lambda_unit, intensity_unit, lambda_kind, modality = _spectrum_units(record_md)
     x_axis_name, y_axis_name = _spectrum_axis_names(record_md)
@@ -405,8 +416,6 @@ def _export_spectrum_figure(envelope: PreviewEnvelope, resource_id: str, fmt: st
     y_label = str(y_axis.get("label") or y_axis.get("name") or _INTENSITY)
     data = _render_line_figure(points, x_label, y_label, fmt)
     if fmt == "svg":
-        from scistudio.previewers.fallbacks import sanitize_svg
-
         sanitized, _removed = sanitize_svg(data.decode("utf-8", errors="replace"))
         data = sanitized.encode("utf-8")
     _check_export_budget(data, max_bytes, resource_id)
@@ -605,79 +614,18 @@ def _grid_signature(grid: list[float]) -> tuple[float, ...]:
 # ---------------------------------------------------------------------------
 
 
-def _slot_ref(parent: StorageReference, record_md: dict[str, Any], slot: str) -> StorageReference | None:
-    """Resolve a bounded read ref for a dataset slot.
+def _slot_ref(request: PreviewRequest, slot: str) -> StorageReference | None:
+    """Resolve a composite slot's typed ref via the sanctioned core API (ADR-052 §8.5).
 
-    Prefers an explicit path the worker recorded (``slot_paths[slot]`` or
-    ``<slot>_path``); otherwise derives the conventional ``<parent>/<slot>``
-    subpath (mirrors imaging ``composite_raster_slot``). Returns ``None`` when no
-    readable candidate exists so the provider degrades gracefully.
+    ``PreviewDataAccess.composite_slot_ref`` reads the core ``CompositeStore``
+    manifest, so the provider never reverse-engineers the on-disk layout or
+    constructs a ``StorageReference``. Returns ``None`` when the slot is not
+    resolvable, so the caller degrades to slot-inventory-only.
     """
-    slot_paths = record_md.get("slot_paths")
-    candidate: str | None = None
-    if isinstance(slot_paths, dict) and isinstance(slot_paths.get(slot), str):
-        candidate = slot_paths[slot]
-    elif isinstance(record_md.get(f"{slot}_path"), str):
-        candidate = record_md[f"{slot}_path"]
-    else:
-        candidate = _manifest_slot_path(Path(parent.path), slot)
-        base = Path(parent.path)
-        for name in (f"{slot}.parquet", f"{slot}.csv", f"{slot}/data.parquet", f"{slot}/data.csv", slot):
-            if candidate is not None:
-                break
-            candidate = _slot_file_candidate(base / name)
-            if candidate is not None:
-                break
-        if candidate is None and base.suffix.lower() in {".parquet", ".csv"}:
-            # Single-file dataset payloads are not slot-separable for a bounded
-            # read; let the caller fall back to slot-inventory-only.
-            return None
-    if candidate is None:
+    storage = request.storage
+    if storage is None:
         return None
-    candidate = _slot_file_candidate(Path(candidate)) or candidate
-    fmt = _format_for_path(candidate)
-    backend = "filesystem" if parent.backend == "composite" and fmt in {"parquet", "csv"} else parent.backend
-    return StorageReference(backend=backend, path=candidate, format=fmt)
-
-
-def _slot_file_candidate(path: Path) -> str | None:
-    """Return a concrete slot file, resolving directory slots to data files."""
-    if path.is_dir():
-        for child_name in ("data.parquet", "data.csv"):
-            child = path / child_name
-            if child.is_file():
-                return str(child)
-        return None
-    return str(path) if path.is_file() else None
-
-
-def _manifest_slot_path(parent_path: Path, slot: str) -> str | None:
-    """Resolve package-native manifest slot refs when the parent ref is JSON."""
-    if parent_path.suffix.lower() != ".json" or not parent_path.exists():
-        return None
-    try:
-        manifest = json.loads(parent_path.read_text(encoding="utf-8"))
-    except Exception:
-        return None
-    slots = manifest.get("slots")
-    if not isinstance(slots, dict):
-        return None
-    ref = slots.get(slot)
-    if not isinstance(ref, dict) or not isinstance(ref.get("path"), str):
-        return None
-    candidate = Path(ref["path"])
-    if not candidate.is_absolute():
-        candidate = parent_path.parent / candidate
-    return str(candidate) if candidate.exists() else None
-
-
-def _format_for_path(path: str) -> str | None:
-    suffix = Path(path).suffix.lower()
-    if suffix == ".parquet":
-        return "parquet"
-    if suffix == ".csv":
-        return "csv"
-    return None
+    return request.data_access.composite_slot_ref(storage, slot)
 
 
 def _read_slot_page(
@@ -783,7 +731,6 @@ def spectral_dataset_provider(request: PreviewRequest) -> PreviewEnvelope:
         return _error_envelope(request, f"spectral dataset preview failed: {exc}")
 
     slot_map = dict(slots.slots)
-    parent = _ref_for(request)
     page = _page_from_query(request)
     page_size = _page_size(request)
     sort_by, sort_dir = _sort_from_query(request)
@@ -791,7 +738,7 @@ def spectral_dataset_provider(request: PreviewRequest) -> PreviewEnvelope:
     truncated = False
 
     # --- paginated index table (FR-023) ----------------------------------
-    index_ref = _slot_ref(parent, record_md, "index")
+    index_ref = _slot_ref(request, "index")
     index_read = _read_slot_page(request, index_ref, page=page, page_size=page_size, sort_by=sort_by, sort_dir=sort_dir)
     index_payload: dict[str, Any] = {
         "columns": [],
@@ -819,7 +766,7 @@ def spectral_dataset_provider(request: PreviewRequest) -> PreviewEnvelope:
         diagnostics.append("index slot not readable as a bounded table; showing slot inventory only")
 
     # --- bounded spectra read for diagnostics (FR-027/FR-028) ------------
-    spectra_ref = _slot_ref(parent, record_md, "spectra")
+    spectra_ref = _slot_ref(request, "spectra")
     spectra_read = _read_slot_page(request, spectra_ref, page=1, page_size=page_size)
     spectra_rows: list[dict[str, Any]] = []
     spectra_columns: list[str] = []

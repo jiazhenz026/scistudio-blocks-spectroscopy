@@ -17,6 +17,8 @@ import fixtures as fx
 import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
+from scistudio.core.storage.composite_store import CompositeStore
+from scistudio.core.types import StorageReference
 from scistudio.previewers.data_access import PreviewDataAccess
 from scistudio.previewers.models import (
     EnvelopeKind,
@@ -51,9 +53,12 @@ def _spec_for(previewer_id: str) -> PreviewerSpec:
 def _request(
     previewer_id: str, chain: tuple[str, ...], *, storage: dict, record_md: dict | None = None
 ) -> PreviewRequest:
-    query: dict = {"_storage": storage}
-    if record_md is not None:
-        query["_record_metadata"] = record_md
+    storage_ref = StorageReference(
+        backend=str(storage.get("backend", "filesystem")),
+        path=str(storage.get("path", "r")),
+        format=storage.get("format"),
+        metadata=storage.get("metadata"),
+    )
     return PreviewRequest(
         target=PreviewTarget(
             kind=TargetKind.DATA_REF,
@@ -62,10 +67,12 @@ def _request(
             type_chain=chain,
         ),
         spec=_spec_for(previewer_id),
-        query=query,
+        query={},
         data_access=PreviewDataAccess(),
         limits=PreviewLimits(),
         session_id=None,
+        storage=storage_ref,
+        record_metadata=record_md or {},
     )
 
 
@@ -76,11 +83,13 @@ def _persist_spectrum(spectrum: Spectrum, path: Path) -> Path:
 
 
 def _persist_dataset(dataset: SpectralDataset, root: Path) -> Path:
-    root.mkdir(parents=True, exist_ok=True)
+    """Persist the dataset as a real core CompositeStore composite (manifest-backed)."""
     index_tbl, spectra_tbl = _support.dataset_frames(dataset)
-    pq.write_table(index_tbl, root / "index.parquet")
-    pq.write_table(spectra_tbl, root / "spectra.parquet")
-    return root
+    ref = CompositeStore().write(
+        {"index": ("arrow", index_tbl), "spectra": ("arrow", spectra_tbl)},
+        StorageReference(backend="composite", path=str(root)),
+    )
+    return Path(ref.path)
 
 
 # ---------------------------------------------------------------------------
@@ -142,7 +151,7 @@ def test_generated_library_dataset_previews_with_index_and_capabilities(tmp_path
         _request(
             SPECTRAL_DATASET_PREVIEWER_ID,
             _DATASET_CHAIN,
-            storage={"backend": "filesystem", "path": str(root), "format": "parquet"},
+            storage={"backend": "composite", "path": str(root), "format": "composite"},
             record_md={
                 "slots": {"index": "DataFrame", "spectra": "DataFrame"},
                 "dataset_role": "library",
@@ -175,7 +184,7 @@ def test_large_dataset_preview_reports_partial_bounded_scan(tmp_path: Path) -> N
         _request(
             SPECTRAL_DATASET_PREVIEWER_ID,
             _DATASET_CHAIN,
-            storage={"backend": "filesystem", "path": str(root), "format": "parquet"},
+            storage={"backend": "composite", "path": str(root), "format": "composite"},
             record_md={"slots": {"index": "DataFrame", "spectra": "DataFrame"}},
         )
     )
@@ -199,7 +208,7 @@ def test_dataset_built_from_collection_previews_clean(tmp_path: Path) -> None:
         _request(
             SPECTRAL_DATASET_PREVIEWER_ID,
             _DATASET_CHAIN,
-            storage={"backend": "filesystem", "path": str(root), "format": "parquet"},
+            storage={"backend": "composite", "path": str(root), "format": "composite"},
             record_md={"slots": {"index": "DataFrame", "spectra": "DataFrame"}},
         )
     )
